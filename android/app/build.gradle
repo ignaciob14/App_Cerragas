@@ -1,0 +1,40 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace = "com.example.cerragas_test_geo"
+    compileSdk = 35 // Cambiado a versión explícita ya que no permitia compilar
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11 // <-- Cambiado a Java 11
+        targetCompatibility = JavaVersion.VERSION_11 // <-- Cambiado a Java 11
+    }
+
+    kotlinOptions {
+        jvmTarget = "11" // <-- Cambiado a Java 11
+    }
+
+    defaultConfig {
+        applicationId = "com.cerragas.app" // <-- Cambiado al ID original
+        minSdk = 23
+        targetSdk = 35
+        versionCode = 1 // Puedes usar valores explícitos o las variables flutter.
+        versionName = "1.0"
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+// Plugin de google
+apply plugin: 'com.google.gms.google-services'

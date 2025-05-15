@@ -1,0 +1,2 @@
+/Users/ignaciobravo/AndroidStudioProjects/cerragas_test_geo/android/app/.cxx/Debug/6s6c3y3r/x86_64/CMakeFiles/edit_cache.dir
+/Users/ignaciobravo/AndroidStudioProjects/cerragas_test_geo/android/app/.cxx/Debug/6s6c3y3r/x86_64/CMakeFiles/rebuild_cache.dir

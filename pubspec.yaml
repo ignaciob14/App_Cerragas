@@ -1,0 +1,49 @@
+name: cerragas_test_geo
+description: Aplicación móvil para conectar usuarios con gasfíteres y cerrajeros.
+publish_to: 'none'
+
+version: 1.0.0
+
+environment:
+  sdk: '^3.5.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  #localizacion
+  geolocator: 10.1.1
+  # geoflutterfire_plus: ^0.0.32
+  geo_firestore_flutter: ^0.1.7 # <- version compatible con las otras librerias usadas
+
+  #fecha
+  intl: ^0.19.0
+  # Íconos y UI
+  cupertino_icons: ^1.0.8
+  font_awesome_flutter: ^10.7.0
+  flutter_rating_bar: ^4.0.1
+
+  # Firebase
+  firebase_core: ^3.0.0
+  firebase_auth: ^5.0.0
+  cloud_firestore: ^5.0.0
+  firebase_storage: ^12.0.0
+  firebase_analytics: ^11.0.0
+  firebase_app_check: ^0.3.0
+
+  # Plugins funcionales
+  url_launcher: ^6.2.5
+  image_picker: ^1.0.4
+  file_picker: ^10.1.0
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo.png
+    - assets/avatar.png

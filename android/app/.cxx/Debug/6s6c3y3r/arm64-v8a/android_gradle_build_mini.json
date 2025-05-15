@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/Users/ignaciobravo/development/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/ignaciobravo/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/ignaciobravo/AndroidStudioProjects/cerragas_test_geo/android/app/.cxx/Debug/6s6c3y3r/arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/ignaciobravo/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/ignaciobravo/AndroidStudioProjects/cerragas_test_geo/android/app/.cxx/Debug/6s6c3y3r/arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}
