@@ -1,6 +1,6 @@
 # cerragas_test_geo
 
-A new Flutter project.
+proyecto realizado en el marco del desarrollo de tesis para optar al titulo de ingeniero en computacion e informatica
 
 ## Getting Started
 
