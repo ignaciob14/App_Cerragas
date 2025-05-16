@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class TerminosCondicionesScreen extends StatelessWidget {
   const TerminosCondicionesScreen({super.key});
 
-  // --- IMPORTANTE: Texto de los Términos y Condiciones actualizado ---
+  // IMPORTANTE: Texto de los Términos y Condiciones actualizado
   final String textoTerminosCondiciones = """
 Términos y Condiciones de Uso de App Cerragas
 
@@ -114,7 +114,7 @@ Si alguna disposición de estos Términos se considera inválida o inaplicable p
 
 Estos Términos constituyen el acuerdo completo entre usted y Cerragas con respecto a nuestro servicio, y reemplazan y anulan cualquier acuerdo anterior que pudiéramos tener entre nosotros con respecto al servicio.
 """;
-  // --- FIN IMPORTANTE ---
+  //  FIN
 
   @override
   Widget build(BuildContext context) {

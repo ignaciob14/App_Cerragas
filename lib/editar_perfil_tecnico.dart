@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
@@ -70,7 +71,9 @@ class _PantallaEditarPerfilTecnicoState extends State<PantallaEditarPerfilTecnic
         _errorCarga = "No se encontró el perfil del técnico.";
       }
     } catch (e) {
-      print("Error al cargar datos del perfil: $e");
+      if (kDebugMode) {
+        print("Error al cargar datos del perfil: $e");
+      }
       if (mounted) { _errorCarga = "Error al cargar los datos. Intenta de nuevo."; }
     } finally {
       if (mounted) { setState(() { cargando = false; }); }
@@ -114,7 +117,9 @@ class _PantallaEditarPerfilTecnicoState extends State<PantallaEditarPerfilTecnic
       return;
     }
 
-    print("Obteniendo ubicación actual del técnico...");
+    if (kDebugMode) {
+      print("Obteniendo ubicación actual del técnico...");
+    }
     try {
       Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
       if (!mounted) return;
@@ -123,10 +128,14 @@ class _PantallaEditarPerfilTecnicoState extends State<PantallaEditarPerfilTecnic
         _buscandoUbicacionTecnico = false;
         _errorUbicacionTecnico = null;
       });
-      print("Nueva ubicación de Técnico obtenida: ${_nuevaUbicacionTecnico}");
+      if (kDebugMode) {
+        print("Nueva ubicación de Técnico obtenida: $_nuevaUbicacionTecnico");
+      }
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ubicación obtenida. Guarda los cambios para aplicarla.'), duration: Duration(seconds: 3), backgroundColor: Colors.green));
     } catch (e) {
-      print("Error al obtener ubicación del técnico: $e");
+      if (kDebugMode) {
+        print("Error al obtener ubicación del técnico: $e");
+      }
       if (!mounted) return;
       setState(() {
         _errorUbicacionTecnico = 'No se pudo obtener la ubicación: ${e.toString()}';
@@ -164,7 +173,9 @@ class _PantallaEditarPerfilTecnicoState extends State<PantallaEditarPerfilTecnic
 
     try {
       // 1. Actualizar datos principales en Firestore (SIN ubicación)
-      print("Actualizando datos principales...");
+      if (kDebugMode) {
+        print("Actualizando datos principales...");
+      }
       await FirebaseFirestore.instance.collection('users').doc(widget.tecnicoID).update({
         'nombre': nombreController.text.trim(),
         'especialidad': especialidadController.text.trim(),
@@ -174,18 +185,26 @@ class _PantallaEditarPerfilTecnicoState extends State<PantallaEditarPerfilTecnic
         'tarifa': tarifa,
         // NO incluimos 'position' aquí
       });
-      print("Datos principales actualizados.");
+      if (kDebugMode) {
+        print("Datos principales actualizados.");
+      }
 
       // 2. Actualizar ubicación usando GeoFirestore SI se obtuvo una nueva
       if (_nuevaUbicacionTecnico != null) {
-        print("Actualizando ubicación con GeoFirestore...");
+        if (kDebugMode) {
+          print("Actualizando ubicación con GeoFirestore...");
+        }
         try {
           final GeoFirestore geoFirestore = GeoFirestore(FirebaseFirestore.instance.collection('users'));
           final GeoPoint punto = GeoPoint(_nuevaUbicacionTecnico!.latitude, _nuevaUbicacionTecnico!.longitude);
           await geoFirestore.setLocation(widget.tecnicoID, punto); // Actualiza 'g' y 'l'
-          print("Ubicación GeoFirestore actualizada.");
+          if (kDebugMode) {
+            print("Ubicación GeoFirestore actualizada.");
+          }
         } catch (e) {
-          print("Error al actualizar ubicación con GeoFirestore: $e");
+          if (kDebugMode) {
+            print("Error al actualizar ubicación con GeoFirestore: $e");
+          }
           // Opcional: Mostrar un warning, pero no detener el flujo principal
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -194,10 +213,12 @@ class _PantallaEditarPerfilTecnicoState extends State<PantallaEditarPerfilTecnic
           }
         }
       } else {
-        print("No se seleccionó nueva ubicación, omitiendo actualización de GeoFirestore.");
+        if (kDebugMode) {
+          print("No se seleccionó nueva ubicación, omitiendo actualización de GeoFirestore.");
+        }
       }
 
-      // --- Éxito (al menos de los datos principales) ---
+      // Éxito (al menos de los datos principales)
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Perfil actualizado con éxito'), backgroundColor: Colors.green),
@@ -207,7 +228,9 @@ class _PantallaEditarPerfilTecnicoState extends State<PantallaEditarPerfilTecnic
 
     } catch (e) {
       // Error al actualizar los datos principales
-      print("Error al guardar cambios principales: $e");
+      if (kDebugMode) {
+        print("Error al guardar cambios principales: $e");
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al guardar cambios: ${e.toString()}'), backgroundColor: Colors.redAccent),
@@ -219,12 +242,12 @@ class _PantallaEditarPerfilTecnicoState extends State<PantallaEditarPerfilTecnic
       }
     }
   }
-  // --- Fin guardarCambios ---
+  //  Fin guardarCambios
 
 
   @override
   Widget build(BuildContext context) {
-    // --- Código del build con la sección de ubicación añadida ---
+    //  Código del build con la sección de ubicación añadida
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Perfil Técnico'),
@@ -256,7 +279,7 @@ class _PantallaEditarPerfilTecnicoState extends State<PantallaEditarPerfilTecnic
             campo('Tarifa Base (CLP)', tarifaController, TextInputType.number),
             const SizedBox(height: 20),
 
-            // --- NUEVA SECCIÓN UBICACIÓN ---
+            // SECCIÓN UBICACIÓN
             const Divider(),
             const SizedBox(height: 10),
             const Text('Actualizar Ubicación de Referencia', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
@@ -293,7 +316,7 @@ class _PantallaEditarPerfilTecnicoState extends State<PantallaEditarPerfilTecnic
             ),
             const SizedBox(height: 20),
             const Divider(),
-            // --- FIN NUEVA SECCIÓN ---
+            // --- FIN Sección Ubicacion---
 
             const SizedBox(height: 20), // Espacio antes del botón guardar
 

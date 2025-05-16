@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -34,18 +35,17 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
   bool _isLoading = false; // Para el registro general
   String? _errorMessage; // Errores de validación
 
-  // --- NUEVO: Estado para el checkbox de términos ---
+  // Estado para el checkbox de términos
   bool _aceptaTerminos = false;
-  // --- FIN NUEVO ---
 
   // Variables de Estado para Ubicación
   Position? _ubicacionTecnico;
   bool _buscandoUbicacionTecnico = false;
   String? _errorUbicacionTecnico;
 
-  // --- NUEVO: Regex para teléfono chileno ---
+  //  Regex para teléfono chileno con +56 9 XXXX XXXX
   final _telefonoRegexCL = RegExp(r'^\+?56\s?9\s?\d{8}$');
-  // --- FIN NUEVO ---
+
   final _emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
 
@@ -89,10 +89,14 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
       await ref.putFile(archivo);
       return await ref.getDownloadURL();
     } on FirebaseException catch (e) {
-      print('Error al subir archivo a Storage: (${e.code}) ${e.message}');
+      if (kDebugMode) {
+        print('Error al subir archivo a Storage: (${e.code}) ${e.message}');
+      }
       throw Exception('Error al subir archivo: ${e.code}');
     } catch (e) {
-      print('Error inesperado al subir archivo: $e');
+      if (kDebugMode) {
+        print('Error inesperado al subir archivo: $e');
+      }
       throw Exception('Error inesperado al subir archivo.');
     }
   }
@@ -132,7 +136,9 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
       return;
     }
 
-    print("Obteniendo ubicación actual del técnico...");
+    if (kDebugMode) {
+      print("Obteniendo ubicación actual del técnico...");
+    }
     try {
       Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
       if (!mounted) return;
@@ -141,10 +147,14 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
         _buscandoUbicacionTecnico = false;
         _errorUbicacionTecnico = null;
       });
-      print("Ubicación de Técnico obtenida: ${_ubicacionTecnico}");
+      if (kDebugMode) {
+        print("Ubicación de Técnico obtenida: $_ubicacionTecnico");
+      }
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ubicación obtenida con éxito.'), duration: Duration(seconds: 2), backgroundColor: Colors.green));
     } catch (e) {
-      print("Error al obtener ubicación del técnico: $e");
+      if (kDebugMode) {
+        print("Error al obtener ubicación del técnico: $e");
+      }
       if (!mounted) return;
       setState(() {
         _errorUbicacionTecnico = 'No se pudo obtener la ubicación: ${e.toString()}';
@@ -212,7 +222,7 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
     List<String> urlsDocs = [];
     User? user;
 
-    // --- NUEVO: Normalizar número de teléfono antes de guardar ---
+    //  Normalizar número de teléfono antes de guardar
     String telefonoNormalizado = telefono.replaceAll(RegExp(r'\s+'), '');
     if (!telefonoNormalizado.startsWith('+')) {
       if (telefonoNormalizado.startsWith('569')) {
@@ -221,7 +231,6 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
         telefonoNormalizado = '+56$telefonoNormalizado';
       }
     }
-    // --- FIN NUEVO ---
 
     try {
       final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -246,8 +255,9 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
           urlsDocs.add(url);
         }
       }
-
-      print("Guardando datos principales del técnico...");
+      if (kDebugMode) {
+        print("Guardando datos principales del técnico...");
+      }
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'uid': uid,
         'nombre': nombre,
@@ -262,14 +272,18 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
         'totalServicios': 0,
         'fechaRegistro': FieldValue.serverTimestamp(),
       });
-      print("Datos principales guardados.");
-
-      print("Guardando ubicación con GeoFirestore...");
+      if (kDebugMode) {
+        print("Datos principales guardados.");
+      }
+      if (kDebugMode) {
+        print("Guardando ubicación con GeoFirestore...");
+      }
       final GeoFirestore geoFirestore = GeoFirestore(FirebaseFirestore.instance.collection('users'));
       final GeoPoint punto = GeoPoint(_ubicacionTecnico!.latitude, _ubicacionTecnico!.longitude);
       await geoFirestore.setLocation(uid, punto);
-      print("Ubicación GeoFirestore guardada.");
-
+      if (kDebugMode) {
+        print("Ubicación GeoFirestore guardada.");
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Técnico registrado con éxito'), backgroundColor: Colors.green),
@@ -287,10 +301,14 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
         mensaje = 'Error de autenticación: ${e.message ?? e.code}';
       }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje), backgroundColor: Colors.redAccent));
-      print('Error de Firebase Auth (Registro Técnico): (${e.code}) ${e.message}');
+      if (kDebugMode) {
+        print('Error de Firebase Auth (Registro Técnico): (${e.code}) ${e.message}');
+      }
 
     } catch (e) {
-      print('Error general en registro de técnico: $e');
+      if (kDebugMode) {
+        print('Error general en registro de técnico: $e');
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error al registrar: ${e.toString()}'), backgroundColor: Colors.redAccent)
@@ -299,13 +317,19 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
       if (user != null) {
         try {
           await user.delete();
-          print("Usuario de Auth borrado debido a error en registro.");
+          if (kDebugMode) {
+            print("Usuario de Auth borrado debido a error en registro.");
+          }
         } catch (deleteError) {
-          print("Error al intentar borrar usuario de Auth después de fallo: $deleteError");
+          if (kDebugMode) {
+            print("Error al intentar borrar usuario de Auth después de fallo: $deleteError");
+          }
         }
       }
     } finally {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _isLoading = false;
       });
@@ -400,7 +424,7 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
                 icon: const Icon(Icons.cloud_upload),
                 label: const Text('Subir documentos (Opcional)'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.blueAccent, side: BorderSide(color: Colors.blueAccent),
+                  foregroundColor: Colors.blueAccent, side: const BorderSide(color: Colors.blueAccent),
                   padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                 ),
@@ -412,7 +436,7 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
                 ),
               const SizedBox(height: 16), // Espacio antes de checkbox
 
-              // --- NUEVO: Checkbox y texto de aceptación ---
+              //  Checkbox y texto de aceptación de términos
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -426,8 +450,8 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
                     activeColor: Colors.blueAccent,
                     checkColor: Colors.white, // Color de la marca de verificación
                     // Cambiar color del borde para que sea visible sobre fondo gris claro
-                    side: MaterialStateBorderSide.resolveWith(
-                          (states) => BorderSide(width: 2, color: states.contains(MaterialState.selected) ? Colors.blueAccent : Colors.black54),
+                    side: WidgetStateBorderSide.resolveWith(
+                          (states) => BorderSide(width: 2, color: states.contains(WidgetState.selected) ? Colors.blueAccent : Colors.black54),
                     ),
                   ),
                   Expanded(
@@ -474,7 +498,6 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
                   ),
                 ],
               ),
-              // --- FIN NUEVO ---
               const SizedBox(height: 16),
 
               if (_errorMessage != null)
@@ -489,9 +512,9 @@ class _PantallaRegistroTecnicoState extends State<PantallaRegistroTecnico> {
               const SizedBox(height: 10),
 
               ElevatedButton(
-                // --- MODIFICADO: Deshabilitar si no acepta términos ---
+                // Deshabilitar si no acepta términos o si está cargando
                 onPressed: _isLoading || _buscandoUbicacionTecnico || !_aceptaTerminos ? null : _registrarTecnico,
-                // --- FIN MODIFICADO ---
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blueAccent,
                   foregroundColor: Colors.white,

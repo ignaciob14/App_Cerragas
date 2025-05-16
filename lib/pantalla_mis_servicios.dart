@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,13 +24,15 @@ class PantallaMisServicios extends StatefulWidget {
 class _PantallaMisServiciosState extends State<PantallaMisServicios> {
   bool _isLoggingOut = false;
   Stream<QuerySnapshot>? _serviciosStream;
-  Map<String, bool> _isUpdatingService = {};
+  final Map<String, bool> _isUpdatingService = {};
 
   @override
   void initState() {
     super.initState();
     _cargarServiciosStream();
-    print("Dashboard del técnico ${widget.tecnicoID} iniciado.");
+    if (kDebugMode) {
+      print("Dashboard del técnico ${widget.tecnicoID} iniciado.");
+    }
   }
 
   void _cargarServiciosStream() {
@@ -51,12 +54,14 @@ class _PantallaMisServiciosState extends State<PantallaMisServicios> {
     try {
       await FirebaseAuth.instance.signOut();
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
+      await Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const PantallaLogin()),
             (Route<dynamic> route) => false,
       );
     } catch (e) {
-      print("Error al cerrar sesión (desde Mis Servicios): $e");
+      if (kDebugMode) {
+        print("Error al cerrar sesión (desde Mis Servicios): $e");
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al cerrar sesión: ${e.toString()}')),
@@ -75,7 +80,9 @@ class _PantallaMisServiciosState extends State<PantallaMisServicios> {
         'estado': 'aceptado',
       });
     } catch (e) {
-      print("Error al aceptar servicio: $e");
+      if (kDebugMode) {
+        print("Error al aceptar servicio: $e");
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al aceptar: ${e.toString()}'), backgroundColor: Colors.red),
@@ -93,17 +100,21 @@ class _PantallaMisServiciosState extends State<PantallaMisServicios> {
     if (!mounted) return;
     setState(() => _isUpdatingService[servicioId] = true);
 
-    print("Intentando RECHAZAR servicio: $servicioId");
-    // --- AÑADE O VERIFICA ESTE PRINT ---
+    if (kDebugMode) {
+      print("Intentando RECHAZAR servicio: $servicioId");
+    }
     final Map<String, dynamic> datosParaActualizar = {'estado': 'rechazado'};
-    print("Datos que se enviarán para rechazar: $datosParaActualizar");
-    // --- FIN AÑADE O VERIFICA ---
+    if (kDebugMode) {
+      print("Datos que se enviarán para rechazar: $datosParaActualizar");
+    }
     try {
       await FirebaseFirestore.instance.collection('servicios').doc(servicioId).update({
         'estado': 'rechazado',
       });
     } catch (e) {
-      print("Error al rechazar servicio: $e");
+      if (kDebugMode) {
+        print("Error al rechazar servicio: $e");
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al rechazar: ${e.toString()}'), backgroundColor: Colors.red),
@@ -126,7 +137,9 @@ class _PantallaMisServiciosState extends State<PantallaMisServicios> {
         'fechaFinalizacionTecnico': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      print("Error al finalizar servicio: $e");
+      if (kDebugMode) {
+        print("Error al finalizar servicio: $e");
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al finalizar: ${e.toString()}'), backgroundColor: Colors.red),
@@ -154,7 +167,9 @@ class _PantallaMisServiciosState extends State<PantallaMisServicios> {
         throw Exception('No se pudo iniciar la llamada a $url');
       }
     } catch (e) {
-      print("Error al intentar llamar: $e");
+      if (kDebugMode) {
+        print("Error al intentar llamar: $e");
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('No se pudo realizar la llamada: ${e.toString()}')),
@@ -194,7 +209,9 @@ class _PantallaMisServiciosState extends State<PantallaMisServicios> {
         throw Exception('No se pudo abrir WhatsApp para $url');
       }
     } catch (e) {
-      print("Error al intentar abrir WhatsApp: $e");
+      if (kDebugMode) {
+        print("Error al intentar abrir WhatsApp: $e");
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('No se pudo abrir WhatsApp: ${e.toString()}')),
@@ -248,7 +265,9 @@ class _PantallaMisServiciosState extends State<PantallaMisServicios> {
         stream: _serviciosStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            print("Error en StreamBuilder MisServicios: ${snapshot.error}");
+            if (kDebugMode) {
+              print("Error en StreamBuilder MisServicios: ${snapshot.error}");
+            }
             return Center(child: Text('Error al cargar servicios: ${snapshot.error}'));
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -338,10 +357,10 @@ class _PantallaMisServiciosState extends State<PantallaMisServicios> {
                 );
               }
 
-              // --- MODIFICADO: Estructura del Card para nuevo layout ---
+              //  Estructura del Card para nuevo layout
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                elevation: 3, // Un poco más de elevación para destacar
+                elevation: 3, // Aumentar elevación para destacar
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), // Bordes más suaves
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
@@ -396,16 +415,14 @@ class _PantallaMisServiciosState extends State<PantallaMisServicios> {
                         ),
                       ),
                       // Widget de acciones a la derecha (trailing)
-                      if (trailingWidget != null)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0), // Espacio entre info y acciones
-                          child: trailingWidget,
-                        ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0), // Espacio entre info y acciones
+                        child: trailingWidget,
+                      ),
                     ],
                   ),
                 ),
               );
-              // --- FIN MODIFICADO ---
             },
           );
         },

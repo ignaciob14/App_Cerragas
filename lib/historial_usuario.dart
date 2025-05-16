@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -25,16 +26,20 @@ class _PantallaHistorialUsuarioState extends State<PantallaHistorialUsuario> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchHistorialServicios() async {
-    print("Fetching historial de servicios para usuarioID: ${widget.usuarioID}");
+    if (kDebugMode) {
+      print("Fetching historial de servicios para usuarioID: ${widget.usuarioID}");
+    }
     try {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('servicios')
           .where('usuarioID', isEqualTo: widget.usuarioID)
-      // Podrías querer ordenar por 'fecha' (creación del servicio) o 'fechaCalificacion' si existe
+      //  ordenar por fecha (creación del servicio)
           .orderBy('fecha', descending: true)
           .get();
 
-      print("Servicios en historial de usuario encontrados: ${querySnapshot.docs.length}");
+      if (kDebugMode) {
+        print("Servicios en historial de usuario encontrados: ${querySnapshot.docs.length}");
+      }
       List<Map<String, dynamic>> historial = [];
       for (var doc in querySnapshot.docs) {
         final data = doc.data();
@@ -43,12 +48,13 @@ class _PantallaHistorialUsuarioState extends State<PantallaHistorialUsuario> {
       }
       return historial;
     } catch (e) {
-      print("Error al cargar historial de servicios del usuario: $e");
+      if (kDebugMode) {
+        print("Error al cargar historial de servicios del usuario: $e");
+      }
       // Propagar el error para que FutureBuilder lo maneje
       throw Exception("Error al cargar historial: $e");
     }
   }
-
   // Función para obtener un texto legible del estado del servicio
   String _getDisplayEstado(String? estadoDB) {
     switch (estadoDB) {
@@ -87,7 +93,6 @@ class _PantallaHistorialUsuarioState extends State<PantallaHistorialUsuario> {
       appBar: AppBar(
         title: const Text('Historial de Servicios'),
         backgroundColor: Colors.blueAccent,
-        // El color de los iconos y texto del AppBar se hereda del tema global
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _historialServiciosFuture,

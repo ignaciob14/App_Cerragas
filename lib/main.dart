@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -8,13 +9,15 @@ import 'firebase_options.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
-  // Inicializaciones estándar
+  // Inicializacion estándar
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await initializeDateFormatting('es_CL', null);
-  print("Datos de localización 'es_CL' inicializados.");
+  if (kDebugMode) {
+    print("Datos de localización 'es_CL' inicializados.");
+  }
   // Activacion de App Check
   await FirebaseAppCheck.instance.activate(
     androidProvider: AndroidProvider.debug, // Pruebas en emulador
@@ -40,7 +43,7 @@ class CerragasApp extends StatelessWidget {
           titleTextStyle: TextStyle(
             color: Colors.white, // Color del texto del título
             fontSize: 20,        // Tamaño de fuente estándar para títulos de AppBar
-            fontWeight: FontWeight.bold, // O FontWeight.w500 si prefieres un poco menos grueso
+            fontWeight: FontWeight.bold, // O FontWeight.w500
           ),
 
           // Estilo para los iconos en el leading ( flecha de atrás)
@@ -57,7 +60,6 @@ class CerragasApp extends StatelessWidget {
           // brightness: Brightness.dark, // Comentado porque foregroundColor debería manejarlo
         ),
       ),
-      // --- FIN NUEVO ---
       home: const PantallaInicio(),
     );
   }
@@ -75,14 +77,13 @@ class PantallaInicio extends StatelessWidget {
           children: [
             // Espacio superior
             const SizedBox(height: 40),
-
             // Logo
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0), // Padding horizontal
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(40),
                 child: Image.asset(
-                  'assets/logo.png', // ruta correcta del logo en pubspec.yaml
+                  'assets/logo.png', // ruta del logo en pubspec.yaml
                   width: 300,
                   fit: BoxFit.contain,
                 ),

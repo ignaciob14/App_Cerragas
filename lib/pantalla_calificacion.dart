@@ -1,11 +1,11 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart'; // Asegúrate de tener este paquete
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import necesario
 
 class PantallaCalificacionServicio extends StatefulWidget {
   final String servicioID;
@@ -34,7 +34,7 @@ class _PantallaCalificacionServicioState extends State<PantallaCalificacionServi
     super.dispose();
   }
 
-  // --- Funciones de Imagen ---
+  //  Funciones de Imagen
   Future<void> _seleccionarImagen() async {
     if (_isLoading) return;
     final picker = ImagePicker();
@@ -54,10 +54,10 @@ class _PantallaCalificacionServicioState extends State<PantallaCalificacionServi
     await ref.putFile(imagen);
     return await ref.getDownloadURL();
   }
-  // --- Fin Funciones de Imagen ---
+  //  Fin Funciones de Imagen
 
 
-  // --- Lógica Principal para Subir Calificación (VERSIÓN FINAL LIMPIA) ---
+  //  Lógica Principal para Subir Calificación
   Future<void> _subirCalificacion() async {
     if (!mounted) return;
     FocusScope.of(context).unfocus();
@@ -67,7 +67,6 @@ class _PantallaCalificacionServicioState extends State<PantallaCalificacionServi
     String? imagenUrl;
     bool exitoGeneral = false;
 
-    // No necesitamos los prints de UID aquí en la versión final
 
     try {
       // 1. Subir imagen si existe
@@ -79,20 +78,20 @@ class _PantallaCalificacionServicioState extends State<PantallaCalificacionServi
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final refServicio = FirebaseFirestore.instance.collection('servicios').doc(widget.servicioID);
         // Asegurar tipado de referencia para lectura dentro de transacción
-        final refTecnico = FirebaseFirestore.instance.collection('users').doc(widget.tecnicoID) as DocumentReference<Map<String, dynamic>>;
+        final refTecnico = FirebaseFirestore.instance.collection('users').doc(widget.tecnicoID);
 
         final snapshotTecnico = await transaction.get(refTecnico);
         if (!snapshotTecnico.exists) {
           throw Exception("El técnico no existe (ID: ${widget.tecnicoID})");
         }
-        // Usar data()! después de verificar exists es seguro
+        // Usar data()! después de verificar existencias para asegurar que es seguro
         final dataTecnico = snapshotTecnico.data()!;
         final double calificacionActual = (dataTecnico['calificacion'] as num?)?.toDouble() ?? 0.0;
         final int totalServiciosActual = (dataTecnico['totalServicios'] as int?) ?? 0;
 
         final double nuevaCalificacionUsuario = calificacion;
         final int nuevoTotalServicios = totalServiciosActual + 1;
-        // Evitar división por cero si es el primer servicio (aunque totalServiciosActual debería ser >= 0)
+        // Evitar división por cero si es el primer servicio
         final double nuevaMediaTecnico = (nuevoTotalServicios == 0)
             ? nuevaCalificacionUsuario // Si es el primero, la media es la calificación actual
             : ((calificacionActual * totalServiciosActual) + nuevaCalificacionUsuario) / nuevoTotalServicios;
@@ -107,12 +106,12 @@ class _PantallaCalificacionServicioState extends State<PantallaCalificacionServi
           'fechaCalificacion': FieldValue.serverTimestamp(),
         });
 
-        // --- Actualización de Técnico REACTIVADA ---
+        // Actualización de Técnico REACTIVADA
         transaction.update(refTecnico, {
           'calificacion': nuevaMediaTecnico,
           'totalServicios': nuevoTotalServicios,
         });
-        // --- FIN Actualización de Técnico ---
+        //  FIN Actualización de Técnico
       }); // Fin Transacción
 
       exitoGeneral = true;
@@ -125,8 +124,10 @@ class _PantallaCalificacionServicioState extends State<PantallaCalificacionServi
       }
 
     } catch (e) {
-      // Mantenemos el log del error por si acaso
-      print("Error al subir calificación (versión final): $e");
+      // Mantenemos el log del error
+      if (kDebugMode) {
+        print("Error al subir calificación (versión final): $e");
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al enviar calificación: ${e.toString()}'), backgroundColor: Colors.redAccent),
@@ -138,10 +139,10 @@ class _PantallaCalificacionServicioState extends State<PantallaCalificacionServi
       }
     }
   }
-  // --- Fin _subirCalificacion ---
+  //  Fin _subirCalificacion
 
 
-  // --- Método Build (Sin Cambios) ---
+  //  Método Build
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -247,7 +248,7 @@ class _PantallaCalificacionServicioState extends State<PantallaCalificacionServi
     );
   }
 
-  // --- Helper local para campo de texto (Sin Cambios) ---
+  //  Helper local para campo de texto
   Widget _campoTexto({
     required String label,
     required TextEditingController controller,

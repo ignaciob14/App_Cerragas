@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -156,7 +157,9 @@ class _PantallaRegistroUsuarioState extends State<PantallaRegistroUsuario> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(mensaje), backgroundColor: Colors.redAccent),
         );
-        print('Error de Firebase Auth (Registro): (${e.code}) ${e.message}');
+        if (kDebugMode) {
+          print('Error de Firebase Auth (Registro): (${e.code}) ${e.message}');
+        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -167,7 +170,9 @@ class _PantallaRegistroUsuarioState extends State<PantallaRegistroUsuario> {
               backgroundColor: Colors.redAccent
           ),
         );
-        print('Error inesperado (Registro): $e');
+        if (kDebugMode) {
+          print('Error inesperado (Registro): $e');
+        }
       });
     } finally {
       if (mounted) {

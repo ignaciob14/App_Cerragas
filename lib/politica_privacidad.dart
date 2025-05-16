@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class PoliticaPrivacidadScreen extends StatelessWidget {
   const PoliticaPrivacidadScreen({super.key});
 
-  // --- IMPORTANTE: Texto de la Política de Privacidad actualizado ---
+  // IMPORTANTE: Texto de la Política de Privacidad
   final String textoPoliticaPrivacidad = """
 Política de Privacidad de App Cerragas
 
@@ -118,7 +118,7 @@ Appcerragas@gmail.com
 
 Esta Política de Privacidad se rige e interpreta de acuerdo con las leyes de la República de Chile.
 """;
-  // --- FIN IMPORTANTE ---
+  // FIN
 
   @override
   Widget build(BuildContext context) {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,9 +29,9 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
   bool _isLoadingContact = false;
   bool _isLoggingOut = false;
 
-  // --- NUEVO: Variable para almacenar el nombre del técnico una vez cargado ---
+  // Variable para almacenar el nombre del técnico una vez cargado
   String? _nombreDelTecnicoActual;
-  // --- FIN NUEVO ---
+
 
   @override
   void initState() {
@@ -40,7 +41,7 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
     _contactosSemanaFuture = _fetchContactosSemana();
     _verificarTipoUsuario();
 
-    // --- NUEVO: Cargar el nombre del técnico para usarlo después ---
+    //  Cargar el nombre del técnico para usarlo después
     _tecnicoDataFuture.then((snapshot) {
       if (snapshot.exists && mounted) {
         final data = snapshot.data();
@@ -49,10 +50,11 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
         });
       }
     }).catchError((error) {
-      print("Error al precargar nombre del técnico: $error");
-      // Manejar el error como sea apropiado, quizás _nombreDelTecnicoActual quede null
+      if (kDebugMode) {
+        print("Error al precargar nombre del técnico: $error");
+      }
+      // Manejar el error, quizás no actualizar _nombreDelTecnicoActual quede null
     });
-    // --- FIN NUEVO ---
   }
 
   Future<DocumentSnapshot<Map<String, dynamic>>> _fetchTecnicoData() {
@@ -63,7 +65,9 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchComentarios() async {
-    print("Fetching comentarios para tecnicoID: ${widget.tecnicoID}");
+    if (kDebugMode) {
+      print("Fetching comentarios para tecnicoID: ${widget.tecnicoID}");
+    }
     try {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('servicios')
@@ -74,7 +78,9 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
           .orderBy('fechaCalificacion', descending: true)
           .limit(10)
           .get();
-      print("Comentarios encontrados: ${querySnapshot.docs.length}");
+      if (kDebugMode) {
+        print("Comentarios encontrados: ${querySnapshot.docs.length}");
+      }
       List<Map<String, dynamic>> comentarios = [];
       for (var doc in querySnapshot.docs) {
         final data = doc.data();
@@ -83,13 +89,17 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
       }
       return comentarios;
     } catch (e) {
-      print("Error al cargar comentarios: $e");
+      if (kDebugMode) {
+        print("Error al cargar comentarios: $e");
+      }
       throw Exception("Error al cargar comentarios: $e");
     }
   }
 
   Future<int> _fetchContactosSemana() async {
-    print("Fetching contactos semana para tecnicoID: ${widget.tecnicoID}");
+    if (kDebugMode) {
+      print("Fetching contactos semana para tecnicoID: ${widget.tecnicoID}");
+    }
     try {
       final DateTime ahora = DateTime.now();
       final DateTime hace7Dias = ahora.subtract(const Duration(days: 7));
@@ -100,10 +110,14 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
           .where('fecha', isGreaterThanOrEqualTo: timestampHace7Dias)
           .count()
           .get();
-      print("Contactos encontrados en la última semana: ${querySnapshot.count}");
+      if (kDebugMode) {
+        print("Contactos encontrados en la última semana: ${querySnapshot.count}");
+      }
       return querySnapshot.count ?? 0;
     } catch (e) {
-      print("Error al cargar contador de contactos: $e");
+      if (kDebugMode) {
+        print("Error al cargar contador de contactos: $e");
+      }
       return 0;
     }
   }
@@ -118,7 +132,7 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
     }
   }
 
-  // --- Lógica de Registro de Servicio (MODIFICADA) ---
+  //  Lógica de Registro de Servicio
   Future<void> _registrarServicio(String medio, String? tecnicoNombre) async { // <-- MODIFICADO: Acepta tecnicoNombre
     if (!mounted) return;
     setState(() => _isLoadingContact = true);
@@ -139,10 +153,14 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
             usuarioTelefono = userData?['telefono'] as String?;
           } else {
             usuarioNombre = usuarioNombre ?? "Cliente";
-            print("Advertencia: No se encontró el documento del usuario ${usuario.uid} para obtener teléfono.");
+            if (kDebugMode) {
+              print("Advertencia: No se encontró el documento del usuario ${usuario.uid} para obtener teléfono.");
+            }
           }
         } catch (e) {
-          print("Error al obtener datos del usuario cliente: $e");
+          if (kDebugMode) {
+            print("Error al obtener datos del usuario cliente: $e");
+          }
           usuarioNombre = usuarioNombre ?? "Cliente";
           usuarioTelefono = null;
         }
@@ -175,13 +193,17 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
         }
 
       } catch (e) {
-        print("Error al registrar servicio: $e");
+        if (kDebugMode) {
+          print("Error al registrar servicio: $e");
+        }
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al registrar el servicio: ${e.toString()}'), backgroundColor: Colors.redAccent),
         );
       } finally {
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
         setState(() => _isLoadingContact = false);
       }
     } else {
@@ -192,7 +214,7 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
     }
   }
 
-  // --- Lógica de Confirmación (MODIFICADA) ---
+  //  Lógica de Confirmación
   Future<void> _confirmarYRegistrar(String medio, String? telefonoTecnico, String? nombreTecnico) async { // <-- MODIFICADO: Acepta nombreTecnico
     if (telefonoTecnico == null || telefonoTecnico.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -206,11 +228,11 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
       url = Uri.parse('tel:$telefonoTecnico');
     } else if (medio == "WhatsApp") {
       String whatsAppNumber = telefonoTecnico.replaceAll(RegExp(r'[^0-9]'), '');
-      // Ajustar formato para WhatsApp (ej. +569xxxxxxxx -> 569xxxxxxxx)
+      // Ajustar formato para WhatsApp (+569xxxxxxxx)
       if (whatsAppNumber.startsWith('+') && whatsAppNumber.length > 1) {
         whatsAppNumber = whatsAppNumber.substring(1);
       }
-      // Asumiendo que el número ya tiene el código de país correcto para wa.me
+      //  el número ya tiene el código de país correcto para wa.me
       url = Uri.parse('https://wa.me/$whatsAppNumber?text=Hola,%20vi%20tu%20perfil%20en%20Cerragas');
     }
 
@@ -235,15 +257,16 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
           );
 
           if (confirmacion == true) {
-            // --- MODIFICADO: Pasar nombreTecnico ---
+            //  Pasar nombreTecnico a _registrarServicio
             await _registrarServicio(medio, nombreTecnico);
-            // --- FIN MODIFICADO ---
           }
         } else {
           throw Exception('No se pudo lanzar $url');
         }
       } catch (e) {
-        print("Error al lanzar URL o en diálogo: $e");
+        if (kDebugMode) {
+          print("Error al lanzar URL o en diálogo: $e");
+        }
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('No se pudo $medio. Error: ${e.toString()}')),
@@ -258,12 +281,14 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
     try {
       await FirebaseAuth.instance.signOut();
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
+      await Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const PantallaLogin()),
             (Route<dynamic> route) => false,
       );
     } catch (e) {
-      print("Error al cerrar sesión (técnico): $e");
+      if (kDebugMode) {
+        print("Error al cerrar sesión (técnico): $e");
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al cerrar sesión: ${e.toString()}')),
@@ -279,11 +304,11 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
 
     return Scaffold(
       appBar: AppBar(
-        // --- MODIFICADO: Usar _nombreDelTecnicoActual si está disponible para el título ---
+        //  Usar _nombreDelTecnicoActual si está disponible para el título
         title: Text(appBarController == null
             ? (_nombreDelTecnicoActual != null ? 'Perfil de $_nombreDelTecnicoActual' : "Perfil Técnico")
             : "Cargando..."),
-        // --- FIN MODIFICADO ---
+
         backgroundColor: Colors.blueAccent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -315,7 +340,7 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
                 if (result == true && mounted) {
                   setState(() {
                     _tecnicoDataFuture = _fetchTecnicoData();
-                    // --- NUEVO: Actualizar nombre y contactos si se edita ---
+                    //  Actualizar nombre y contactos si se edita el perfil
                     _tecnicoDataFuture.then((snapshot) {
                       if (snapshot.exists && mounted) {
                         final data = snapshot.data();
@@ -325,7 +350,7 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
                       }
                     });
                     _contactosSemanaFuture = _fetchContactosSemana();
-                    // --- FIN NUEVO ---
+
                   });
                 }
               },
@@ -345,7 +370,9 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || !snapshot.hasData || !(snapshot.data?.exists ?? false)) {
-            print("Error en FutureBuilder: ${snapshot.error}");
+            if (kDebugMode) {
+              print("Error en FutureBuilder: ${snapshot.error}");
+            }
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -358,9 +385,9 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
           }
 
           final tecnicoData = snapshot.data!.data()!;
-          // --- MODIFICADO: Usar _nombreDelTecnicoActual si ya se cargó, sino el de tecnicoData ---
+          // Usar _nombreDelTecnicoActual si ya se cargó, sino el de tecnicoData
           final nombre = _nombreDelTecnicoActual ?? tecnicoData['nombre'] as String? ?? 'Nombre no disponible';
-          // --- FIN MODIFICADO ---
+
           final fotoUrl = tecnicoData['fotoPerfil'] as String?;
           final calificacion = tecnicoData['calificacion'] as num? ?? 0.0;
           final tarifa = tecnicoData['tarifa'] as num?;
@@ -369,8 +396,8 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
 
           // Actualizar título del AppBar si no se hizo con _nombreDelTecnicoActual
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && appBarController != null && appBarController.setTitle != null && _nombreDelTecnicoActual == null) {
-              appBarController.setTitle!(Text('Perfil de $nombre'));
+            if (mounted && appBarController != null && _nombreDelTecnicoActual == null) {
+              appBarController.setTitle(Text('Perfil de $nombre'));
             }
           });
 
@@ -392,7 +419,9 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
                     backgroundImage: (fotoUrl != null && fotoUrl.isNotEmpty)
                         ? NetworkImage(fotoUrl)
                         : const AssetImage('assets/avatar.png') as ImageProvider,
-                    onBackgroundImageError: (_, __) { print("Error cargando imagen de perfil: $fotoUrl"); },
+                    onBackgroundImageError: (_, __) { if (kDebugMode) {
+                      print("Error cargando imagen de perfil: $fotoUrl");
+                    } },
                   ),
                   const SizedBox(height: 10),
                   Text(nombre, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white), textAlign: TextAlign.center),
@@ -424,7 +453,9 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
                         displayWidget = const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2));
                       } else if (snapshotContactos.hasError) {
                         displayWidget = const Icon(Icons.error_outline, color: Colors.orangeAccent, size: 20);
-                        print("Error en FutureBuilder contactos: ${snapshotContactos.error}");
+                        if (kDebugMode) {
+                          print("Error en FutureBuilder contactos: ${snapshotContactos.error}");
+                        }
                       } else {
                         final int count = snapshotContactos.data ?? 0;
                         displayWidget = Text(
@@ -447,9 +478,8 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
 
                   if (!esTecnicoActual) ...[
                     ElevatedButton.icon(
-                      // --- MODIFICADO: Pasar nombre del técnico ---
+                      //  Pasar nombre del técnico a _confirmarYRegistrar
                       onPressed: _isLoadingContact || _isLoggingOut ? null : () => _confirmarYRegistrar("llamada", telefono, nombre),
-                      // --- FIN MODIFICADO ---
                       icon: _isLoadingContact ? _buildLoadingIndicator() : const Icon(Icons.phone),
                       label: const Text('Llamar'),
                       style: ElevatedButton.styleFrom(
@@ -460,9 +490,8 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
-                      // --- MODIFICADO: Pasar nombre del técnico ---
+                      //  Pasar nombre del técnico a _confirmarYRegistrar
                       onPressed: _isLoadingContact || _isLoggingOut ? null : () => _confirmarYRegistrar("WhatsApp", telefono, nombre),
-                      // --- FIN MODIFICADO ---
                       icon: _isLoadingContact ? _buildLoadingIndicator() : const FaIcon(FontAwesomeIcons.whatsapp),
                       label: const Text('Enviar WhatsApp'),
                       style: ElevatedButton.styleFrom(
@@ -550,18 +579,18 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
                                         unratedColor: Colors.amber.withAlpha(80),
                                         direction: Axis.horizontal,
                                       ),
-                                      Text(fechaFormateada, style: TextStyle(fontSize: 12, color: Colors.white70)),
+                                      Text(fechaFormateada, style: const TextStyle(fontSize: 12, color: Colors.white70)),
                                     ],
                                   ),
                                   if (usuarioNombre != null && usuarioNombre.isNotEmpty) ...[
                                     const SizedBox(height: 4),
-                                    Text("De: $usuarioNombre", style: TextStyle(fontSize: 12, color: Colors.white70, fontStyle: FontStyle.italic)),
+                                    Text("De: $usuarioNombre", style: const TextStyle(fontSize: 12, color: Colors.white70, fontStyle: FontStyle.italic)),
                                   ],
                                   if (textoComentario != 'Sin comentario escrito.' && textoComentario.isNotEmpty) ...[
                                     const SizedBox(height: 8),
                                     Text(
                                       textoComentario,
-                                      style: TextStyle(color: Colors.white, fontSize: 14),
+                                      style: const TextStyle(color: Colors.white, fontSize: 14),
                                       maxLines: 5,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -593,7 +622,7 @@ class _PantallaPerfilTecnicoState extends State<PantallaPerfilTecnico> {
 
 class DefaultAppBarController extends InheritedWidget {
   final Function(Widget?) setTitle;
-  const DefaultAppBarController({super.key, required this.setTitle, required Widget child}) : super(child: child);
+  const DefaultAppBarController({super.key, required this.setTitle, required super.child});
 
   static DefaultAppBarController? maybeOf(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<DefaultAppBarController>();

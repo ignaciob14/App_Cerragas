@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart'; // Para mostrar estrellas
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class PantallaHistorialServicios extends StatefulWidget {
   final String tecnicoID;
@@ -25,26 +26,32 @@ class _PantallaHistorialServiciosState extends State<PantallaHistorialServicios>
   }
 
   Future<List<Map<String, dynamic>>> _fetchHistorialServicios() async {
-    print("Fetching historial de servicios para tecnicoID: ${widget.tecnicoID}");
+    if (kDebugMode) {
+      print("Fetching historial de servicios para tecnicoID: ${widget.tecnicoID}");
+    }
     try {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('servicios')
           .where('tecnicoID', isEqualTo: widget.tecnicoID)
           .where('estado', whereIn: ['calificado', 'rechazado', 'cancelado_usuario', 'cancelado_tecnico']) // Estados finales
           .orderBy('fecha', descending: true) // O 'fechaCalificacion'/'fechaFinalizacionTecnico' si es más relevante
-          .limit(50) // Limitar para no cargar demasiado de golpe
+          .limit(50) // Limitar para no cargar todos los servicios
           .get();
 
-      print("Servicios en historial encontrados: ${querySnapshot.docs.length}");
+      if (kDebugMode) {
+        print("Servicios en historial encontrados: ${querySnapshot.docs.length}");
+      }
       List<Map<String, dynamic>> historial = [];
       for (var doc in querySnapshot.docs) {
         final data = doc.data();
-        data['id'] = doc.id; // Guardar el ID por si lo necesitas
+        data['id'] = doc.id; // Guardar el ID
         historial.add(data);
       }
       return historial;
     } catch (e) {
-      print("Error al cargar historial de servicios: $e");
+      if (kDebugMode) {
+        print("Error al cargar historial de servicios: $e");
+      }
       throw Exception("Error al cargar historial: $e");
     }
   }
@@ -114,7 +121,7 @@ class _PantallaHistorialServiciosState extends State<PantallaHistorialServicios>
               final String estadoDisplay = _getDisplayEstado(estadoDB); // Usar función para estado legible
 
               final Timestamp? fechaTimestamp = servicioData['fecha'] as Timestamp?; // Fecha de solicitud
-              // Podrías querer mostrar fecha de finalización o calificación si es más relevante
+              //  mostrar fecha de finalización o calificación
               final Timestamp? fechaFinalTimestamp = servicioData['fechaFinalizacionTecnico'] as Timestamp? ?? servicioData['fechaCalificacion'] as Timestamp? ?? fechaTimestamp;
 
 

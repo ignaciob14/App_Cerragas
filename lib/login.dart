@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -18,15 +19,14 @@ class _PantallaLoginState extends State<PantallaLogin> {
   late TextEditingController emailController;
   late TextEditingController passwordController;
 
-  // --- NUEVO: Estado para visibilidad de contraseña ---
+  //  Estado para visibilidad de contraseña
   bool _isPasswordVisible = false;
-  // --- FIN NUEVO ---
 
   // Variables de estado
   bool _isLoading = false; // Para el botón de login
-  // --- NUEVO: Estado de carga para reset password ---
+  //  Estado de carga para reset password
   bool _isResettingPassword = false;
-  // --- FIN NUEVO ---
+
   String? _errorMessage;
 
   @override
@@ -43,7 +43,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
     super.dispose();
   }
 
-  // Lógica de inicio de sesión (sin cambios en su lógica interna)
+  // Lógica de inicio de sesión
   Future<void> _login() async {
     if (!mounted) return;
     FocusScope.of(context).unfocus();
@@ -79,18 +79,19 @@ class _PantallaLoginState extends State<PantallaLogin> {
             final data = docSnap.data();
             final userType = data?['tipo'] as String?;
 
-            print("Usuario autenticado: ${user.email}, Tipo: $userType");
+            if (kDebugMode) {
+              print("Usuario autenticado: ${user.email}, Tipo: $userType");
+            }
 
             if (userType == 'tecnico') {
-              Navigator.pushReplacement(
+              await Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder: (context) => PantallaMisServicios(tecnicoID: user!.uid),
                 ),
               );
-              // No necesitas return aquí si la navegación reemplaza la pantalla
             } else if (userType == 'usuario') {
-              Navigator.pushReplacement(
+              await Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const PantallaBusqueda()),
               );
@@ -114,19 +115,19 @@ class _PantallaLoginState extends State<PantallaLogin> {
           }
         } catch (e) {
           // Error leyendo Firestore
-          print("Error al leer datos de Firestore: $e");
+          if (kDebugMode) {
+            print("Error al leer datos de Firestore: $e");
+          }
           if (!mounted) return;
           setState(() {
             _errorMessage = "Error al obtener datos del usuario.";
             _isLoading = false;
           });
-          // Desloguear si hubo error al leer datos después de autenticar
-          if (user != null) await FirebaseAuth.instance.signOut();
+          // Desconectar el usuario en caso de error al leer datos después de autenticar
+          await FirebaseAuth.instance.signOut();
         }
       }
-      // Si user es null después del try inicial (poco probable pero posible)
-      // O si el flujo llega aquí sin navegar (ej. error de tipo)
-      // Asegurarse que isLoading se quite si no hubo error de Auth específico
+
       if (mounted && _isLoading && _errorMessage != null) {
         setState(() => _isLoading = false);
       }
@@ -139,28 +140,27 @@ class _PantallaLoginState extends State<PantallaLogin> {
         } else if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
           _errorMessage = 'La contraseña es incorrecta.';
         } else {
-          _errorMessage = 'Error de autenticación. Intenta de nuevo.'; // Mensaje más genérico
+          _errorMessage = 'Error de autenticación. Intenta de nuevo.'; // Mensaje genérico
         }
-        print('Error de Firebase Auth (Login): (${e.code}) ${e.message}');
+        if (kDebugMode) {
+          print('Error de Firebase Auth (Login): (${e.code}) ${e.message}');
+        }
         _isLoading = false;
       });
     } catch (e) {
-      print('Error inesperado en login: $e');
+      if (kDebugMode) {
+        print('Error inesperado en login: $e');
+      }
       if (!mounted) return;
       setState(() {
         _errorMessage = "Ocurrió un error inesperado.";
         _isLoading = false;
       });
     }
-    // Asegurarse de quitar isLoading si el flujo termina aquí por alguna razón
-    // (aunque las navegaciones pushReplacement desmontan el widget)
-    // if (mounted && _isLoading) {
-    //   setState(() => _isLoading = false);
-    // }
+
   }
 
-
-  // --- NUEVO: Lógica para recuperar contraseña ---
+  //  Lógica para recuperar contraseña
   Future<void> _resetPassword() async {
     if (!mounted) return;
     FocusScope.of(context).unfocus();
@@ -191,7 +191,9 @@ class _PantallaLoginState extends State<PantallaLogin> {
         ),
       );
     } on FirebaseAuthException catch (e) {
-      print("Error al enviar correo de recuperación: (${e.code}) ${e.message}");
+      if (kDebugMode) {
+        print("Error al enviar correo de recuperación: (${e.code}) ${e.message}");
+      }
       if (!mounted) return;
       String mensajeError = 'Error al enviar el correo.';
       if (e.code == 'user-not-found' || e.code == 'invalid-email') {
@@ -204,7 +206,9 @@ class _PantallaLoginState extends State<PantallaLogin> {
         ),
       );
     } catch (e) {
-      print("Error inesperado en recuperación: $e");
+      if (kDebugMode) {
+        print("Error inesperado en recuperación: $e");
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -218,7 +222,6 @@ class _PantallaLoginState extends State<PantallaLogin> {
       }
     }
   }
-  // --- FIN NUEVO ---
 
   @override
   Widget build(BuildContext context) {
@@ -261,7 +264,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
                       ),
                       const SizedBox(height: 20),
 
-                      // --- MODIFICADO: Campo Contraseña con visibilidad ---
+                      //  Campo Contraseña con visibilidad
                       CampoTexto(
                         label: 'Contraseña:',
                         controller: passwordController,
@@ -273,7 +276,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
                             color: Colors.grey[600],
                           ),
                           onPressed: () {
-                            // Solo permitir cambiar si no está cargando
+                            //  permitir cambiar si no está cargando
                             if (!_isLoading && !_isResettingPassword) {
                               setState(() {
                                 _isPasswordVisible = !_isPasswordVisible;
@@ -282,11 +285,10 @@ class _PantallaLoginState extends State<PantallaLogin> {
                           },
                         ),
                       ),
-                      // --- FIN MODIFICADO ---
 
-                      // --- NUEVO: Botón Recuperar Contraseña ---
+                      // Botón Recuperar Contraseña
                       Padding(
-                        padding: const EdgeInsets.only(top: 8.0, right: 10.0), // Ajusta padding si es necesario
+                        padding: const EdgeInsets.only(top: 8.0, right: 10.0),
                         child: Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
@@ -301,7 +303,6 @@ class _PantallaLoginState extends State<PantallaLogin> {
                           ),
                         ),
                       ),
-                      // --- FIN NUEVO ---
 
                       const SizedBox(height: 20), // Espacio ajustado
 
@@ -367,14 +368,14 @@ class _PantallaLoginState extends State<PantallaLogin> {
 }
 
 
-// --- Widget CampoTexto reutilizable (MODIFICADO para aceptar suffixIcon y enabled) ---
+// --- Widget CampoTexto reutilizable
 class CampoTexto extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final TextInputType keyboardType;
   final bool obscureText;
-  final Widget? suffixIcon; // <-- NUEVO
-  final bool enabled;       // <-- NUEVO
+  final Widget? suffixIcon;
+  final bool enabled;
 
   const CampoTexto({
     super.key,
@@ -382,8 +383,8 @@ class CampoTexto extends StatelessWidget {
     required this.controller,
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
-    this.suffixIcon,      // <-- NUEVO
-    this.enabled = true,  // <-- NUEVO (default true)
+    this.suffixIcon,
+    this.enabled = true,
   });
 
   @override
@@ -392,20 +393,18 @@ class CampoTexto extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
-      enabled: enabled, // <-- Usar propiedad enabled
+      enabled: enabled,
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        // --- MODIFICADO: Cambiar color si está deshabilitado ---
+        //  Cambiar color si está deshabilitado
         fillColor: enabled ? Colors.grey[200] : Colors.grey[350],
-        // --- FIN MODIFICADO ---
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide.none,
         ),
         errorText: null,
-        suffixIcon: suffixIcon, // <-- Usar el suffixIcon proporcionado
-        // Ajustar padding si el suffixIcon se ve muy apretado
+        suffixIcon: suffixIcon,
         contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
       ),
     );

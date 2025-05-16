@@ -1,18 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geo_firestore_flutter/geo_firestore_flutter.dart';
 import 'perfil_tecnico.dart';
 
-// StatefulWidget Modificado para aceptar ubicación y radio
+// StatefulWidget para aceptar ubicación y radio
 class PantallaResultados extends StatefulWidget {
   final String especialidad;
   final String tarifa;
   final String calificacion;
   final String genero;
   final String distancia;
-  final Position? ubicacionUsuario; // <-- Ubicación del usuario
-  final double? radioKm; // <-- Radio de búsqueda en KM
+  final Position? ubicacionUsuario; //  Ubicación del usuario
+  final double? radioKm; //  Radio de búsqueda en KM
 
   const PantallaResultados({
     super.key,
@@ -45,7 +46,7 @@ class _PantallaResultadosState extends State<PantallaResultados> {
     );
   }
 
-  // --- Lógica para obtener técnicos (ADAPTADA para geo_firestore_flutter) ---
+  //  Lógica para obtener técnicos (ADAPTADA para geo_firestore_flutter)
   Future<List<Map<String, dynamic>>> _obtenerTecnicos({
     required String especialidad,
     required String tarifa,
@@ -54,38 +55,51 @@ class _PantallaResultadosState extends State<PantallaResultados> {
     Position? ubicacionDelUsuario,
     double? radioEnKm,
   }) async {
-    print("Iniciando _obtenerTecnicos (usando geo_firestore_flutter)...");
-    print("Ubicación Usuario (recibida): ${ubicacionDelUsuario?.latitude}, ${ubicacionDelUsuario?.longitude}");
-    print("Radio Km (recibido): $radioEnKm");
+    if (kDebugMode) {
+      print("Iniciando _obtenerTecnicos (usando geo_firestore_flutter)...");
+    }
+    if (kDebugMode) {
+      print("Ubicación Usuario (recibida): ${ubicacionDelUsuario?.latitude}, ${ubicacionDelUsuario?.longitude}");
+    }
+    if (kDebugMode) {
+      print("Radio Km (recibido): $radioEnKm");
+    }
 
     List<DocumentSnapshot> docs = [];
     const String campoGeoPoint = 'l';
 
     try {
-      // --- CORRECCIÓN APLICADA AQUÍ ---
       // Añadir explícitamente el tipo <Map<String, dynamic>>
       final CollectionReference<Map<String, dynamic>> collectionRef = FirebaseFirestore.instance.collection('users');
-      // --- FIN CORRECCIÓN ---
+
 
 
       if (ubicacionDelUsuario != null && radioEnKm != null && radioEnKm > 0) {
-        print("Realizando consulta geográfica con geo_firestore_flutter...");
+        if (kDebugMode) {
+          print("Realizando consulta geográfica con geo_firestore_flutter...");
+        }
         // 1. Crear instancia de GeoFirestore (ahora usa la collectionRef tipada)
         final GeoFirestore geoFirestore = GeoFirestore(collectionRef);
         // 2. Crear GeoPoint para el centro
         final GeoPoint centro = GeoPoint(ubicacionDelUsuario.latitude, ubicacionDelUsuario.longitude);
         // 3. Ejecutar la consulta getAtLocation
         final List<DocumentSnapshot> docsGeo = await geoFirestore.getAtLocation(centro, radioEnKm);
-        print("Docs encontrados por geo-query: ${docsGeo.length}");
+        if (kDebugMode) {
+          print("Docs encontrados por geo-query: ${docsGeo.length}");
+        }
         // 4. Filtrar por tipo 'tecnico' (necesario hacerlo en cliente)
         docs = docsGeo.where((doc) {
           final data = doc.data() as Map<String, dynamic>?; // Cast explícito
           return data != null && data['tipo'] == 'tecnico';
         }).toList();
-        print("Docs filtrados por tipo 'tecnico': ${docs.length}");
-
+        if (kDebugMode) {
+          print("Docs filtrados por tipo 'tecnico': ${docs.length}");
+        }
+        // 5. Aplicar filtros adicionales...
       } else {
-        print("Realizando consulta NO geográfica...");
+        if (kDebugMode) {
+          print("Realizando consulta NO geográfica...");
+        }
         // Empezar con la referencia tipada y aplicar filtros
         Query<Map<String, dynamic>> query = collectionRef.where('tipo', isEqualTo: 'tecnico');
 
@@ -107,10 +121,12 @@ class _PantallaResultadosState extends State<PantallaResultados> {
         // Obtener el snapshot de la consulta tipada
         final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
         docs = snapshot.docs; // Los docs ya son del tipo correcto
-        print("Docs encontrados por consulta NO geo: ${docs.length}");
+        if (kDebugMode) {
+          print("Docs encontrados por consulta NO geo: ${docs.length}");
+        }
       }
 
-      // --- Procesar y Filtrar Resultados en Cliente ---
+      // Aplicar filtros adicionales Procesar y Filtrar Resultados en Cliente
       List<Map<String, dynamic>> tecnicosData = [];
       double? tarifaMaxFiltroCliente = double.tryParse(tarifa);
       double? califMinFiltroCliente = (ubicacionDelUsuario != null && radioEnKm != null && radioEnKm > 0)
@@ -119,14 +135,13 @@ class _PantallaResultadosState extends State<PantallaResultados> {
 
       for (var doc in docs) { // doc es ahora DocumentSnapshot<Map<String, dynamic>>
         if (doc.exists) {
-          // El data() ya es del tipo correcto Map<String, dynamic>?
           final Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
           if (data == null) continue;
 
           data['docId'] = doc.id; // Añadir ID del documento
           bool pasaFiltros = true;
 
-          // Aplicar filtros restantes...
+          // Aplicar filtros restantes
           if (ubicacionDelUsuario != null && radioEnKm != null && radioEnKm > 0 && especialidad.isNotEmpty) {
             if (data['especialidad'] != especialidad) pasaFiltros = false;
           }
@@ -159,10 +174,14 @@ class _PantallaResultadosState extends State<PantallaResultados> {
                     tecGeoPoint.latitude, tecGeoPoint.longitude
                 );
                 data['distanciaKm'] = distanciaMetros / 1000.0;
-                print("Técnico ${data['nombre']} (${doc.id}) a ${data['distanciaKm']?.toStringAsFixed(1)} km");
+                if (kDebugMode) {
+                  print("Técnico ${data['nombre']} (${doc.id}) a ${data['distanciaKm']?.toStringAsFixed(1)} km");
+                }
               } else {
                 data['distanciaKm'] = null;
-                print("Técnico ${data['nombre']} (${doc.id}) no tiene datos de ubicación válidos en campo '$campoGeoPoint'.");
+                if (kDebugMode) {
+                  print("Técnico ${data['nombre']} (${doc.id}) no tiene datos de ubicación válidos en campo '$campoGeoPoint'.");
+                }
               }
             } else {
               data['distanciaKm'] = null;
@@ -183,12 +202,15 @@ class _PantallaResultadosState extends State<PantallaResultados> {
           return distA.compareTo(distB);
         });
       }
-
-      print("Técnicos finales después de filtros/distancia: ${tecnicosData.length}");
+      if (kDebugMode) {
+        print("Técnicos finales después de filtros/distancia: ${tecnicosData.length}");
+      }
       return tecnicosData;
 
     } catch (e) {
-      print("Error completo en _obtenerTecnicos: $e");
+      if (kDebugMode) {
+        print("Error completo en _obtenerTecnicos: $e");
+      }
       if (e is FirebaseException && e.code == 'failed-precondition') {
         throw Exception('Consulta requiere índice: Revisa el log de Firebase para crearlo.');
       }
@@ -198,7 +220,6 @@ class _PantallaResultadosState extends State<PantallaResultados> {
       throw Exception('Error al cargar técnicos: ${e.toString()}');
     }
   }
-  // --- Fin _obtenerTecnicos ---
 
 
   // --- Método Build ---
@@ -217,19 +238,19 @@ class _PantallaResultadosState extends State<PantallaResultados> {
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _tecnicosFuture,
         builder: (context, snapshot) {
-          // Manejo de estados del Future (sin cambios)
+          // Manejo de estados del Future
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Padding( // Añadido Padding para mejor visualización del error
+            return Center(child: Padding( // Añadido Padding
               padding: const EdgeInsets.all(16.0),
               child: Text('Ocurrió un error al cargar los técnicos.\n${snapshot.error}', textAlign: TextAlign.center),
             ));
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
-              child: Padding( // Añadido Padding
+              child: Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(
                   'No se encontraron técnicos que coincidan con tus criterios.',
@@ -240,7 +261,7 @@ class _PantallaResultadosState extends State<PantallaResultados> {
             );
           }
 
-          // Construcción de la lista (sin cambios en la lógica de visualización)
+          // Construcción de la lista
           final tecnicos = snapshot.data!;
           return ListView.builder(
             itemCount: tecnicos.length,
@@ -264,7 +285,9 @@ class _PantallaResultadosState extends State<PantallaResultados> {
                         ? NetworkImage(tecnico['fotoPerfil'])
                         : const AssetImage('assets/avatar.png') as ImageProvider,
                     onBackgroundImageError: (_, __) {
-                      print("Error cargando imagen: ${tecnico['fotoPerfil']}");
+                      if (kDebugMode) {
+                        print("Error cargando imagen: ${tecnico['fotoPerfil']}");
+                      }
                     },
                   ),
                   title: Text(tecnico['nombre'] ?? 'Nombre no disponible'),
@@ -285,7 +308,9 @@ class _PantallaResultadosState extends State<PantallaResultados> {
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     if (tecnicoId != null) {
-                      print("Navegando a perfil con ID: $tecnicoId");
+                      if (kDebugMode) {
+                        print("Navegando a perfil con ID: $tecnicoId");
+                      }
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -295,7 +320,9 @@ class _PantallaResultadosState extends State<PantallaResultados> {
                         ),
                       );
                     } else {
-                      print("Error: No se encontró 'docId' para este técnico en el mapa de datos.");
+                      if (kDebugMode) {
+                        print("Error: No se encontró 'docId' para este técnico en el mapa de datos.");
+                      }
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Error interno: No se pudo obtener el ID del técnico.')),
                       );

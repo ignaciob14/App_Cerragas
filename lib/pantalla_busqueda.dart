@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'resultado_busqueda.dart';
 import 'pantalla_calificacion.dart';
@@ -5,9 +6,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:intl/intl.dart';
 import 'historial_usuario.dart';
-// --- FIN NUEVO ---
+
 
 class PantallaBusqueda extends StatefulWidget {
   const PantallaBusqueda({super.key});
@@ -54,7 +54,9 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed && !_buscandoUbicacion) {
-      print("App Resumed - Re-checking location status...");
+      if (kDebugMode) {
+        print("App Resumed - Re-checking location status...");
+      }
       _obtenerUbicacionActual();
     }
   }
@@ -78,7 +80,7 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       if (!mounted) return null;
-      final mensajeError = 'Los servicios de ubicación están desactivados.';
+      const mensajeError = 'Los servicios de ubicación están desactivados.';
       setState(() {
         _errorUbicacion = mensajeError;
         _buscandoUbicacion = false;
@@ -87,7 +89,7 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
       if(mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(mensajeError),
+            content: const Text(mensajeError),
             backgroundColor: Colors.orange[700],
             action: SnackBarAction(
               label: 'ACTIVAR', textColor: Colors.white,
@@ -140,8 +142,9 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
     if(mounted && !_ubicacionActivable) {
       setState(() => _ubicacionActivable = true );
     }
-
-    print("Obteniendo ubicación actual...");
+    if (kDebugMode) {
+      print("Obteniendo ubicación actual...");
+    }
     try {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.medium,
@@ -153,10 +156,14 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
         _errorUbicacion = null;
         _ubicacionActivable = true;
       });
-      print("Ubicación obtenida: ${_ubicacionActual}");
+      if (kDebugMode) {
+        print("Ubicación obtenida: $_ubicacionActual");
+      }
       return position;
     } catch (e) {
-      print("Error al obtener ubicación: $e");
+      if (kDebugMode) {
+        print("Error al obtener ubicación: $e");
+      }
       if (!mounted) return null;
       setState(() {
         _errorUbicacion = 'No se pudo obtener la ubicación.';
@@ -183,21 +190,26 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
     } else if (textoNormalizado == "cerrajero" || textoNormalizado == "cerrajeria" || textoNormalizado == "cerrajería") {
       return "cerrajeria";
     }
-    print("Especialidad no reconocida para normalización: '$input', se usará tal cual: '${input.trim()}'");
+    if (kDebugMode) {
+      print("Especialidad no reconocida para normalización: '$input', se usará tal cual: '${input.trim()}'");
+    }
     return input.trim();
   }
 
   Future<void> _buscarTecnicos() async {
     if (_buscandoUbicacion || _isLoading) return;
     final Position? ubicacionObtenida = await _obtenerUbicacionActual();
-    print(ubicacionObtenida == null ? "Continuando búsqueda SIN ubicación." : "Continuando búsqueda CON ubicación.");
-
+    if (kDebugMode) {
+      print(ubicacionObtenida == null ? "Continuando búsqueda SIN ubicación." : "Continuando búsqueda CON ubicación.");
+    }
     final String especialidadInput = especialidadController.text.trim();
     final String especialidadParaFirestore = especialidadInput.isNotEmpty ? _normalizarEspecialidad(especialidadInput) : "";
-
-    print("Especialidad ingresada: '$especialidadInput'");
-    print("Especialidad normalizada para Firestore: '$especialidadParaFirestore'");
-
+    if (kDebugMode) {
+      print("Especialidad ingresada: '$especialidadInput'");
+    }
+    if (kDebugMode) {
+      print("Especialidad normalizada para Firestore: '$especialidadParaFirestore'");
+    }
     final tarifaStr = tarifaController.text.trim();
     final calificacionStr = calificacionController.text.trim();
     final distanciaStr = distanciaController.text.trim();
@@ -224,11 +236,11 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
     } else {
       distanciaKm = null;
     }
-
-    print("--- Iniciando Navegación a Resultados ---");
-
+    if (kDebugMode) {
+      print("--- Iniciando Navegación a Resultados ---");
+    }
     if (mounted) {
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => PantallaResultados(
@@ -270,7 +282,7 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
         final data = doc.data();
         final tecnicoID = data.containsKey('tecnicoID') ? data['tecnicoID'] as String? : null;
         if (tecnicoID != null) {
-          Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => PantallaCalificacionServicio(servicioID: doc.id, tecnicoID: tecnicoID),
@@ -283,7 +295,9 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
         if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No hay servicios pendientes por calificar.')));
       }
     } catch (e) {
-      print("Error al buscar servicio pendiente: $e");
+      if (kDebugMode) {
+        print("Error al buscar servicio pendiente: $e");
+      }
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al verificar calificaciones: ${e.toString()}')));
     } finally {
       if (mounted) setState(() => _isCheckingRating = false);
@@ -296,11 +310,13 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
     try {
       await FirebaseAuth.instance.signOut();
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
+      await Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const PantallaLogin()), (Route<dynamic> route) => false,
       );
     } catch (e) {
-      print("Error al cerrar sesión: $e");
+      if (kDebugMode) {
+        print("Error al cerrar sesión: $e");
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cerrar sesión: ${e.toString()}')));
         setState(() => _isLoading = false);
@@ -308,7 +324,7 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
     }
   }
 
-  // --- NUEVO: Función para navegar al historial del usuario ---
+  // Función para navegar al historial del usuario
   void _navegarAHistorialUsuario() {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
@@ -325,7 +341,6 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
       );
     }
   }
-  // --- FIN NUEVO ---
 
   @override
   Widget build(BuildContext context) {
@@ -337,13 +352,13 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
         title: const Text('Buscar Técnico'),
         automaticallyImplyLeading: false,
         actions: [
-          // --- NUEVO: Botón de Historial de Usuario ---
+          // Botón de Historial de Usuario
           IconButton(
             icon: const Icon(Icons.history),
             tooltip: 'Mi Historial de Servicios',
             onPressed: _isLoading ? null : _navegarAHistorialUsuario,
           ),
-          // --- FIN NUEVO ---
+
           _isLoading
               ? const Padding(
             padding: EdgeInsets.only(right: 10.0, left: 10.0), // Ajustar padding si es necesario
@@ -408,7 +423,7 @@ class _PantallaBusquedaState extends State<PantallaBusqueda> with WidgetsBinding
                       const SizedBox(height: 16),
                       CampoTexto(label: 'Tarifa Máxima (Ej: 50000):', controller: tarifaController, keyboardType: TextInputType.number),
                       const SizedBox(height: 16),
-                      CampoTexto(label: 'Calificación Mínima (Ej: 4):', controller: calificacionController, keyboardType: TextInputType.numberWithOptions(decimal: true)),
+                      CampoTexto(label: 'Calificación Mínima (Ej: 4):', controller: calificacionController, keyboardType: const TextInputType.numberWithOptions(decimal: true)),
                       const SizedBox(height: 16),
                       CampoTexto(
                         label: 'Distancia Máxima (Km):',
