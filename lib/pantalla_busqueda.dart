@@ -1,12 +1,12 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'resultado_busqueda.dart';
-import 'pantalla_calificacion.dart';
+import 'historial_usuario.dart';
+import 'login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'login.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'historial_usuario.dart';
+import 'pantalla_calificacion.dart';
+import 'resultado_busqueda.dart';
 
 
 class PantallaBusqueda extends StatefulWidget {

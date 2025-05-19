@@ -1,9 +1,9 @@
+import 'main.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pantalla_busqueda.dart';
-import 'main.dart';
 import 'pantalla_mis_servicios.dart';
 
 // PantallaLogin StatefulWidget
