@@ -46,7 +46,6 @@ UI / Componentes	font_awesome_flutter, flutter_rating_bar
 Internacionalización	intl (localización es_CL)
 Archivos e imágenes	image_picker, file_picker
 Otros	url_launcher (llamadas y WhatsApp directo)
-
 La gestión de estado se maneja de forma nativa con StatelessWidget/Navigator, sin librerías externas de manejo de estado.
 
 📱 Capturas de pantalla
@@ -67,8 +66,8 @@ Fuera de alcance:
 ❌ Métodos de pago integrados
 ❌ Especialidades adicionales fuera de cerrajería y gasfitería
 ❌ Escalabilidad avanzada / cobertura geográfica ampliada
+
 🚀 Cómo ejecutar el proyecto
-bash
 # Clonar el repositorio
 git clone https://github.com/ignaciob14/App_Cerragas.git
 cd App_Cerragas
@@ -89,7 +88,6 @@ Valor para usuarios: confianza, transparencia y eficiencia al contratar servicio
 Valor para técnicos: visibilidad y una plataforma para su desarrollo profesional.
 
 📄 Proyecto desarrollado en el marco del proceso de Titulación de Ingeniería en Computación e Informática — Universidad Andrés Bello, Junio 2025.
-
 
 
 
